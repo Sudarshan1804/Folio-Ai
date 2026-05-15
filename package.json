@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "express": "^5.2.1",
+    "lucide-react": "^0.475.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "mongoose": "^9.6.2",
