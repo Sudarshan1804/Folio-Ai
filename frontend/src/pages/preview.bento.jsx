@@ -1,6 +1,7 @@
-
 import { X, Github, Twitter, Mail, ArrowUpRight, Layout, Download } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useResumeData } from '@/hooks/useResumeData';import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
+
 
 export default BentoTemplate;
 

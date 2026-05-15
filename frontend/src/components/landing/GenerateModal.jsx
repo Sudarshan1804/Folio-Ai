@@ -1,18 +1,43 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Upload, Wand2, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { parseResumeText } from "@/lib/ai-parser";import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 
-export function GenerateModal({ templateId, templateName, children }) {
+
+export function GenerateModal({
+  templateId,
+  templateName,
+  children,
+  initialFile = null
+
+
+
+
+
+}) {
   const [isOpen, setIsOpen] = useState(false);
-  const [file, setFile] = useState(null);
+  const [file, setFile] = useState(initialFile);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationStep, setGenerationStep] = useState(0);
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
+
+  // Update file if initialFile changes
+  useEffect(() => {
+    if (initialFile) {
+      setFile(initialFile);
+    }
+  }, [initialFile]);
+
+  // Auto-trigger generation if modal is opened with a file already selected
+  useEffect(() => {
+    if (isOpen && (initialFile || file) && !isGenerating && !error) {
+      handleGenerate(initialFile || file || undefined);
+    }
+  }, [isOpen, initialFile, file, isGenerating, error]);
 
   const steps = [
   "Reading file contents...",
@@ -26,8 +51,9 @@ export function GenerateModal({ templateId, templateName, children }) {
     setError(null);
   };
 
-  const handleGenerate = async () => {
-    if (!file) return;
+  const handleGenerate = async (fileToUse) => {
+    const currentFile = fileToUse || file;
+    if (!currentFile) return;
 
     setIsGenerating(true);
     setGenerationStep(0);
@@ -36,14 +62,14 @@ export function GenerateModal({ templateId, templateName, children }) {
     try {
       // 1. Read file contents
       let text = "";
-      if (file.type === "application/pdf") {
+      if (currentFile.type === "application/pdf") {
         const pdfjsLib = await import('pdfjs-dist');
         pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
           'pdfjs-dist/build/pdf.worker.min.mjs',
           import.meta.url
         ).toString();
 
-        const arrayBuffer = await file.arrayBuffer();
+        const arrayBuffer = await currentFile.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
@@ -51,7 +77,7 @@ export function GenerateModal({ templateId, templateName, children }) {
           text += content.items.map((item) => item.str).join(" ") + "\n";
         }
       } else {
-        text = await file.text();
+        text = await currentFile.text();
       }
 
       if (!text.trim()) {
@@ -69,8 +95,9 @@ export function GenerateModal({ templateId, templateName, children }) {
       // 4. Redirect
       setGenerationStep(3);
       setTimeout(() => {
-        navigate({ to: `/preview/${templateId}` });
+        navigate(`/preview/${templateId}`);
       }, 1000);
+
 
     } catch (err) {
       console.error("Generation error:", err);
@@ -158,7 +185,7 @@ export function GenerateModal({ templateId, templateName, children }) {
 
 
                 _jsx("button", {
-                  onClick: handleGenerate,
+                  onClick: () => handleGenerate(),
                   disabled: !file,
                   className: "w-full bg-aurora text-background font-medium px-4 py-3 rounded-xl glow transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-95 disabled:hover:scale-100", children:
                   "Generate with AI" }

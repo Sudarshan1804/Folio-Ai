@@ -1,17 +1,30 @@
 import { motion } from "framer-motion";
-import { Link } from "@tanstack/react-router";
-import { GenerateModal } from "./GenerateModal";import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { Link, useNavigate } from "react-router-dom";
+import { GenerateModal } from "./GenerateModal";
+import { getAuthToken } from "@/lib/auth";import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+
 
 export const templates = [
 { id: "bento", name: "Bento Grid Folio", tag: "Modern Layout", image: "/templates/bento.png" },
 { id: "terminal", name: "Terminal Dev", tag: "Engineering", image: "/templates/terminal.png" },
 { id: "glass", name: "Glassmorphism", tag: "Creative Design", image: "/templates/glassmorphism.png" },
 { id: "dark", name: "Dark Studio", tag: "Premium 3D", image: "/templates/dark_studio.png" },
-{ id: "notion", name: "Notion Minimal", tag: "Clean & Simple", image: "/templates/notion_minimal.png" },
 { id: "futuristic", name: "AI Futuristic", tag: "Bold & Animated", image: "/templates/ai_futuristic.png" }];
 
 
 export function Templates() {
+  const navigate = useNavigate();
+
+  const handleUseClick = (e) => {
+    const isLoggedIn = !!getAuthToken();
+    if (!isLoggedIn) {
+      e.preventDefault();
+      e.stopPropagation();
+      navigate("/signin");
+    }
+
+  };
+
   return (/*#__PURE__*/
     _jsx("section", { id: "templates", className: "relative py-32", children: /*#__PURE__*/
       _jsxs("div", { className: "mx-auto max-w-6xl px-6", children: [/*#__PURE__*/
@@ -51,7 +64,10 @@ export function Templates() {
 
                 ), /*#__PURE__*/
                 _jsx(GenerateModal, { templateId: t.id, templateName: t.name, children: /*#__PURE__*/
-                  _jsx("button", { className: "text-xs font-medium bg-aurora text-background px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity cursor-pointer", children: "Use" }
+                  _jsx("button", {
+                    onClick: handleUseClick,
+                    className: "text-xs font-medium bg-aurora text-background px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity cursor-pointer", children:
+                    "Use" }
 
                   ) }
                 )] }

@@ -1,19 +1,41 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Upload, Wand2, X } from "lucide-react";import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { ArrowRight, Upload, Wand2, X } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { GenerateModal } from "./GenerateModal";
+import { templates } from "./Templates";
+import { getAuthToken } from "@/lib/auth";import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 
 export function Hero() {
   const fileInputRef = useRef(null);
   const errorTimeoutRef = useRef(null);
-  const [fileName, setFileName] = useState(null);
+  const [file, setFile] = useState(null);
   const [showError, setShowError] = useState(false);
+  const [randomTemplate, setRandomTemplate] = useState(templates[0]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Pick a new random template whenever the modal might be closed or on initial load
+    setRandomTemplate(templates[Math.floor(Math.random() * templates.length)]);
+  }, [file]);
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
 
-  const handleGenerateClick = () => {
-    if (!fileName) {
+  const handleGenerateClick = (e) => {
+    const isLoggedIn = !!getAuthToken();
+
+    if (!isLoggedIn) {
+      e.preventDefault();
+      e.stopPropagation();
+      navigate({ to: "/signin" });
+      return;
+    }
+
+    if (!file) {
+      e.preventDefault();
+      e.stopPropagation();
       setShowError(true);
       if (errorTimeoutRef.current) {
         clearTimeout(errorTimeoutRef.current);
@@ -23,7 +45,8 @@ export function Hero() {
       }, 5000);
     } else {
       setShowError(false);
-      // Proceed with generation logic here
+      // Pick a new random template on every click to ensure variety
+      setRandomTemplate(templates[Math.floor(Math.random() * templates.length)]);
     }
   };
 
@@ -74,13 +97,19 @@ export function Hero() {
             transition: { duration: 0.7, delay: 0.3 },
             className: "flex flex-col sm:flex-row items-center justify-center gap-3", children: [/*#__PURE__*/
 
-            _jsxs("button", {
-              onClick: handleGenerateClick,
-              className: "group inline-flex items-center gap-2 bg-aurora text-background font-medium px-6 py-3.5 rounded-xl glow hover:scale-[1.02] transition-transform", children: [/*#__PURE__*/
+            _jsx(GenerateModal, {
+              templateId: randomTemplate.id,
+              templateName: randomTemplate.name,
+              initialFile: file, children: /*#__PURE__*/
 
-              _jsx(Wand2, { className: "w-4 h-4" }), "Generate Portfolio with AI", /*#__PURE__*/
+              _jsxs("button", {
+                onClick: handleGenerateClick,
+                className: "group inline-flex items-center gap-2 bg-aurora text-background font-medium px-6 py-3.5 rounded-xl glow hover:scale-[1.02] transition-transform", children: [/*#__PURE__*/
 
-              _jsx(ArrowRight, { className: "w-4 h-4 group-hover:translate-x-1 transition-transform" })] }
+                _jsx(Wand2, { className: "w-4 h-4" }), "Generate Portfolio with AI", /*#__PURE__*/
+
+                _jsx(ArrowRight, { className: "w-4 h-4 group-hover:translate-x-1 transition-transform" })] }
+              ) }
             ), /*#__PURE__*/
             _jsxs("div", { className: "flex items-center gap-2", children: [/*#__PURE__*/
               _jsxs("button", {
@@ -92,12 +121,12 @@ export function Hero() {
 
 
                 _jsx(Upload, { className: "w-4 h-4 shrink-0" }), /*#__PURE__*/
-                _jsx("span", { className: "truncate max-w-[200px]", children: fileName ? fileName : "Upload Resume" })] }
+                _jsx("span", { className: "truncate max-w-[200px]", children: file ? file.name : "Upload Resume" })] }
               ),
-              fileName && /*#__PURE__*/
+              file && /*#__PURE__*/
               _jsx("button", {
                 onClick: () => {
-                  setFileName(null);
+                  setFile(null);
                   if (fileInputRef.current) fileInputRef.current.value = "";
                 },
                 className: "inline-flex items-center justify-center p-3.5 glass text-muted-foreground hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all cursor-pointer",
@@ -113,12 +142,13 @@ export function Hero() {
               className: "hidden",
               accept: ".pdf,.doc,.docx,.ppt,.pptx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation",
               onChange: (e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  setFileName(file.name);
+                const selectedFile = e.target.files?.[0];
+                if (selectedFile) {
+                  setFile(selectedFile);
                   setShowError(false);
-                  console.log("File selected:", file.name);
-                  // Handle file upload logic here
+                  console.log("File selected:", selectedFile.name);
+                  // Update random template when a new file is uploaded
+                  setRandomTemplate(templates[Math.floor(Math.random() * templates.length)]);
                 }
               } }
             )] }

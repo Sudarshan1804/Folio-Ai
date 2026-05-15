@@ -1,19 +1,20 @@
-
 import { motion } from "framer-motion";
-import { Sparkles, ArrowRight } from "lucide-react";
+import { Sparkles, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/landing/Navbar";
 import { useState } from "react";
-import { signInFn } from "@/server-actions/auth";
 import { setAuthToken } from "@/lib/auth";import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 
 export default SignIn;
 
 function SignIn() {
   const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,11 +22,25 @@ function SignIn() {
     setIsLoading(true);
 
     try {
-      const result = await signInFn({ data: { email, password } });
+      const response = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to sign in");
+      }
+
       if (result.token) {
         setAuthToken(result.token);
-        navigate({ to: "/" });
+        navigate("/");
       }
+
     } catch (err) {
       setError(err.message || "Failed to sign in");
     } finally {
@@ -94,14 +109,23 @@ function SignIn() {
 
                 )] }
               ), /*#__PURE__*/
-              _jsx("input", {
-                id: "password",
-                type: "password",
-                value: password,
-                onChange: (e) => setPassword(e.target.value),
-                placeholder: "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022",
-                required: true,
-                className: "w-full bg-background/50 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-muted-foreground/50" }
+              _jsxs("div", { className: "relative", children: [/*#__PURE__*/
+                _jsx("input", {
+                  id: "password",
+                  type: showPassword ? "text" : "password",
+                  value: password,
+                  onChange: (e) => setPassword(e.target.value),
+                  placeholder: "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022",
+                  required: true,
+                  className: "w-full bg-background/50 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-muted-foreground/50 pr-11" }
+                ), /*#__PURE__*/
+                _jsx("button", {
+                  type: "button",
+                  onClick: () => setShowPassword(!showPassword),
+                  className: "absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-muted-foreground hover:text-foreground transition-colors", children:
+
+                  showPassword ? /*#__PURE__*/_jsx(EyeOff, { className: "w-4 h-4" }) : /*#__PURE__*/_jsx(Eye, { className: "w-4 h-4" }) }
+                )] }
               )] }
             ), /*#__PURE__*/
 

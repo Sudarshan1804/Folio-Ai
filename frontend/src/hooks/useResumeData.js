@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import type { PortfolioData } from './ai-parser';
 
 export function useResumeData() {
-  const [data, setData] = useState<PortfolioData | null>(null);
+  const [data, setData] = useState(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -19,3 +18,4 @@ export function useResumeData() {
 
   return data;
 }
+

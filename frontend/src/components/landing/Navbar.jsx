@@ -1,21 +1,46 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "react-router-dom";
 import { Sparkles, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
 import { getAuthToken, clearAuthToken } from "@/lib/auth";import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 
 export function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    setIsLoggedIn(!!getAuthToken());
+    const token = getAuthToken();
+    if (token) {
+      setIsLoggedIn(true);
+      // Fetch user data
+      fetch("/api/auth/me", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }).
+      then((res) => res.json()).
+      then((data) => {
+        if (data.id) {
+          setUser(data);
+        } else {
+          // Token might be invalid
+          clearAuthToken();
+          setIsLoggedIn(false);
+        }
+      }).
+      catch(() => {
+        setIsLoggedIn(false);
+      });
+    }
   }, []);
 
   const handleSignOut = () => {
     clearAuthToken();
     setIsLoggedIn(false);
-    navigate({ to: "/" });
+    setUser(null);
+    navigate("/");
   };
+
 
   const links = [
   { label: "Features", href: "#features" },
@@ -42,8 +67,8 @@ export function Navbar() {
           _jsx("div", { className: "flex items-center gap-2", children:
             isLoggedIn ? /*#__PURE__*/
             _jsxs(_Fragment, { children: [/*#__PURE__*/
-              _jsx(Link, { to: "/profile", className: "inline-flex items-center text-sm font-medium hover:text-primary px-3 py-2 transition-colors", children: "Profile" }
-
+              _jsxs("div", { className: "hidden lg:block text-xs text-muted-foreground mr-2", children: ["Hi, ", /*#__PURE__*/
+                _jsx("span", { className: "text-foreground font-medium", children: user?.name || "there" })] }
               ), /*#__PURE__*/
               _jsxs("button", {
                 onClick: handleSignOut,

@@ -135,13 +135,29 @@ export async function parseResumeText(text) {
     let textResponse = response.text().trim();
 
     // Strip markdown code blocks if the model accidentally includes them
-    if (textResponse.startsWith('\`\`\`json')) {
-      textResponse = textResponse.replace(/^\`\`\`json\n/, '').replace(/\n\`\`\`$/, '');
-    } else if (textResponse.startsWith('\`\`\`')) {
-      textResponse = textResponse.replace(/^\`\`\`\n/, '').replace(/\n\`\`\`$/, '');
+    let cleanedText = textResponse;
+    if (cleanedText.startsWith('```json')) {
+      cleanedText = cleanedText.replace(/^```json\n?/, '').replace(/\n?```$/, '');
+    } else if (cleanedText.startsWith('```')) {
+      cleanedText = cleanedText.replace(/^```\n?/, '').replace(/\n?```$/, '');
     }
 
-    return JSON.parse(textResponse);
+    // Attempt to find the first '{' and last '}' to extract the JSON object
+    // This handles cases where the AI adds conversational text before or after the JSON
+    const firstBrace = cleanedText.indexOf('{');
+    const lastBrace = cleanedText.lastIndexOf('}');
+
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      cleanedText = cleanedText.substring(firstBrace, lastBrace + 1);
+    }
+
+    try {
+      return JSON.parse(cleanedText);
+    } catch (parseError) {
+      console.error("JSON parse error after cleaning:", parseError);
+      console.error("Cleaned text was:", cleanedText);
+      throw new Error("The AI response could not be parsed as valid JSON. Please try again.");
+    }
   } catch (error) {
     console.error("Error parsing resume with Gemini:", error);
     throw error;
